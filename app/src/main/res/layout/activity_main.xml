@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/bg"
+        android:orientation="vertical" />
+
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:scrollbars="none"
+        android:background="#ffffff">
+
+        <LinearLayout
+            android:id="@+id/bottom_bar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_margin="4dp">
+
+        </LinearLayout>
+    </HorizontalScrollView>
+    <!--<io.github.controlwear.virtual.joystick.android.JoystickView
+        xmlns:custom="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/joystick"
+        android:layout_gravity="top|center"
+        android:layout_width="320dp"
+        android:layout_height="320dp"
+        custom:JV_buttonColor="#44000000"
+        custom:JV_buttonSizeRatio="20%"
+        custom:JV_borderColor="#000000"
+        custom:JV_backgroundColor="#33000000"
+        custom:JV_borderWidth="4dp"
+        custom:JV_fixedCenter="false"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/tv_info"/>
+    </LinearLayout>-->
+
+
+</FrameLayout>

@@ -1,0 +1,9 @@
+<resources>
+    <style name="Theme.BLEController" parent="Theme.Material3.Light">
+        <item name="actionBarStyle">@style/ActionBarStyle</item>
+    </style>
+    <style name="ActionBarStyle" parent="Widget.AppCompat.ActionBar.Solid">
+        <item name="contentInsetStart">0dp</item>
+        <item name="contentInsetEnd">0dp</item>
+    </style>
+</resources>
