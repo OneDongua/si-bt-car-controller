@@ -55,9 +55,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@SuppressLint("MissingPermission")
+@SuppressLint({"MissingPermission", "SetTextI18n"})
 
 public class MainActivity extends AppCompatActivity implements BLESPPUtils.OnBluetoothAction, LuaContext {
+    List<String> notGrantedPermissions = new ArrayList<>();
     private String filesDir;
     private LuaDexLoader mLuaDexLoader;
     // 蓝牙工具
@@ -93,7 +94,8 @@ public class MainActivity extends AppCompatActivity implements BLESPPUtils.OnBlu
             bg.addView(customActionBar);
         }
 
-        String[] ps = {"(", ")", "[", "]", "{", "}", "\"", "=", ":", ".", ",", "_", "+", "-", "*", "/", "\\", "%", "#", "^", "$", "?", "&", "|", "<", ">", "~", ";", "'"};
+        String[] ps = {"(", ")", "[", "]", "{", "}", "\"", "=", ":", ".", ",", "_", "+", "-",
+                "*", "/", "\\", "%", "#", "^", "$", "?", "&", "|", "<", ">", "~", ";", "'"};
         LinearLayout bottom_bar = findViewById(R.id.bottom_bar);
         for (String v : ps) {
             bottom_bar.addView(newButton(v));
@@ -101,10 +103,14 @@ public class MainActivity extends AppCompatActivity implements BLESPPUtils.OnBlu
 
         filesDir = getFilesDir().getAbsolutePath();
         mLuaDexLoader = new LuaDexLoader(filesDir, this);
+
         releaseAssets();
+
         checkAndRequestPermissions();
-        //蓝牙开启后再检测位置服务
-        checkBluetooth();
+        if (notGrantedPermissions.isEmpty()) {
+            //蓝牙开启后再检测位置服务
+            checkBluetooth();
+        }
 
         // 初始化
         mBLESPPUtils = new BLESPPUtils(this, this);
@@ -134,71 +140,48 @@ public class MainActivity extends AppCompatActivity implements BLESPPUtils.OnBlu
         editor.setText(readLuaFile("main.lua"));
 
         ImageView play = customActionBar.findViewById(R.id.play);
-        play.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                writeLuaFile(editor.getText().toString());
+        play.setOnClickListener(v -> {
+            writeLuaFile(editor.getText().toString());
 
-                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-                builder.setTitle("输入密码");
+            AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+            builder.setTitle("输入密码");
 
-                final EditText input = new EditText(MainActivity.this);
-                input.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_VARIATION_PASSWORD);
-                input.setTransformationMethod(android.text.method.PasswordTransformationMethod.getInstance());
-                builder.setView(input);
+            final EditText input = new EditText(MainActivity.this);
+            input.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_VARIATION_PASSWORD);
+            input.setTransformationMethod(android.text.method.PasswordTransformationMethod.getInstance());
+            builder.setView(input);
 
-                builder.setPositiveButton("确定", (dialog, which) -> {
-                    String password = input.getText().toString();
-                    if (password.equals("101011")) {
-                        //RunStr task = new RunStr();
-                        //task.execute(editor.getText().toString());
-                        doString(editor.getText().toString());
-                        //mBLESPPUtils.send(("w" + "\n").getBytes());
-                    } else {
-                        makeToast("密码错误");
-                    }
-                });
-                builder.setNegativeButton("取消", null);
-                builder.show();
-            }
-
+            builder.setPositiveButton("确定", (dialog, which) -> {
+                String password = input.getText().toString();
+                if (password.equals("101011")) {
+                    //RunStr task = new RunStr();
+                    //task.execute(editor.getText().toString());
+                    doString(editor.getText().toString());
+                    //mBLESPPUtils.send(("w" + "\n").getBytes());
+                } else {
+                    makeToast("密码错误");
+                }
+            });
+            builder.setNegativeButton("取消", null);
+            builder.show();
         });
-        play.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                makeToast("运行");
-                return true;
-            }
+        play.setOnLongClickListener(v -> {
+            makeToast("运行");
+            return true;
         });
 
         ImageView format = customActionBar.findViewById(R.id.format);
-        format.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                editor.format();
-            }
-        });
-        format.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                makeToast("格式化");
-                return true;
-            }
+        format.setOnClickListener(v -> editor.format());
+        format.setOnLongClickListener(v -> {
+            makeToast("格式化");
+            return true;
         });
 
         ImageView debug = customActionBar.findViewById(R.id.debug);
-        debug.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                doFile("debug.lua", new Object[]{editor.getText().toString()});
-            }
-        });
-        debug.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                makeToast("检查错误");
-                return true;
-            }
+        debug.setOnClickListener(v -> doFile("debug.lua", new Object[]{editor.getText().toString()}));
+        debug.setOnLongClickListener(v -> {
+            makeToast("检查错误");
+            return true;
         });
 
         TextView title = customActionBar.findViewById(R.id.title);
@@ -290,7 +273,6 @@ public class MainActivity extends AppCompatActivity implements BLESPPUtils.OnBlu
         mDevicesList.add(device);
         // 添加条目到 UI 并设置点击事件
         mDeviceDialogCtrl.addDevice(device, new View.OnClickListener() {
-            @SuppressLint("SetTextI18n")
             @Override
             public void onClick(View v) {
                 BluetoothDevice clickDevice = (BluetoothDevice) v.getTag();
@@ -302,16 +284,10 @@ public class MainActivity extends AppCompatActivity implements BLESPPUtils.OnBlu
 
 
     //当连接成功
-    @SuppressLint("SetTextI18n")
     @Override
     public void onConnectSuccess(final BluetoothDevice device) {
         makeToast("连接成功");
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                subtitle.setText("已连接" + device.getName());
-            }
-        });
+        runOnUiThread(() -> subtitle.setText("已连接" + device.getName()));
         mDeviceDialogCtrl.dismiss();
     }
 
@@ -396,7 +372,6 @@ public class MainActivity extends AppCompatActivity implements BLESPPUtils.OnBlu
         //添加一个设备到列表
         private void addDevice(final BluetoothDevice device, final View.OnClickListener onClickListener) {
             runOnUiThread(new Runnable() {
-                @SuppressLint("SetTextI18n")
                 @Override
                 public void run() {
                     TextView textView = new TextView(MainActivity.this);
@@ -441,7 +416,6 @@ public class MainActivity extends AppCompatActivity implements BLESPPUtils.OnBlu
                 permissions.add(android.Manifest.permission.ACCESS_FINE_LOCATION);
             }
 
-            List<String> notGrantedPermissions = new ArrayList<>();
             for (String permission : permissions) {
                 if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
                     notGrantedPermissions.add(permission);
@@ -525,10 +499,9 @@ public class MainActivity extends AppCompatActivity implements BLESPPUtils.OnBlu
 
     //Lua段开始
 
-    public LuaState L;
+    public final LuaState L = LuaStateFactory.newLuaState();
 
     private void initLua() throws Exception {
-        L = LuaStateFactory.newLuaState();
         L.openLibs();
         L.pushJavaObject(this);
         L.setGlobal("activity");
@@ -675,7 +648,7 @@ public class MainActivity extends AppCompatActivity implements BLESPPUtils.OnBlu
             for (String asset : assetList) {
                 String assetPath = "lua/" + asset;
                 InputStream inputStream = assetManager.open(assetPath);
-                FileOutputStream outputStream = null;
+                FileOutputStream outputStream;
                 outputStream = new FileOutputStream(new File(filesDir, asset));
                 byte[] buffer = new byte[1024];
                 int length;
@@ -806,8 +779,8 @@ public class MainActivity extends AppCompatActivity implements BLESPPUtils.OnBlu
                 L.remove(-2);
                 L.insert(-2);
                 int l = args.length;
-                for (int i = 0; i < l; i++) {
-                    L.pushObjectValue(args[i]);
+                for (Object arg : args) {
+                    L.pushObjectValue(arg);
                 }
                 ok = L.pcall(l, 1, -2 - l);
                 if (ok == 0) {
@@ -861,7 +834,7 @@ public class MainActivity extends AppCompatActivity implements BLESPPUtils.OnBlu
     private int mHeight;
 
     @Override
-    public void onConfigurationChanged(Configuration newConfig) {
+    public void onConfigurationChanged(@NonNull Configuration newConfig) {
         // TODO: Implement this method
         super.onConfigurationChanged(newConfig);
         WindowManager wm = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
@@ -908,7 +881,7 @@ public class MainActivity extends AppCompatActivity implements BLESPPUtils.OnBlu
         return false;
     }
 
-    private final ArrayList<LuaGcable> gclist = new ArrayList<LuaGcable>();
+    private final ArrayList<LuaGcable> gclist = new ArrayList<>();
 
     @Override
     public void regGc(LuaGcable obj) {
